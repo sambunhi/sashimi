@@ -1,0 +1,10 @@
+FROM alpine:3.16
+ARG PHP
+ARG PHP_ALPINE_DEPS
+RUN apk add $PHP $PHP-fpm $PHP_ALPINE_DEPS
+RUN chown nobody:nobody /var/log/$PHP && sed 's/;catch_workers_output = yes/catch_workers_output = yes/;s/;decorate_workers_output = no/decorate_workers_output = no/' -i /etc/$PHP/php-fpm.d/www.conf && sed "s|;error_log = log/$PHP/error.log|error_log = /proc/self/fd/2|" -i /etc/$PHP/php-fpm.conf
+WORKDIR /srv/http
+CMD php-fpm81 -F
+ADD . /srv/http
+RUN chown -R nobody:nobody /srv/http/storage
+USER nobody:nobody

@@ -7,3 +7,5 @@ package-lock.json
 resources/css
 resources/js
 .*
+containers/
+vendor.tar

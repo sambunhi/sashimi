@@ -54,3 +54,72 @@ jobs:
         run: cp .env.example .env && $PHP artisan key:generate
       - name: phpunit
         run: $PHP ./vendor/bin/phpunit
+  fpm-image:
+    needs: php-install
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: vendor-with-dev
+      - name: unpack
+        run: tar -xf vendor.tar
+      - name: login
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}/fpm
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: containers/Containerfile-fpm
+          build-args: |
+            PHP=${{ env.PHP }}
+            PHP_ALPINE_DEPS=${{ env.PHP_ALPINE_DEPS }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+  nginx-image:
+    needs: frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: frontend-with-debugging
+      - name: login
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}/nginx
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: containers/Containerfile-nginx
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
