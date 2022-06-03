@@ -103,7 +103,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/fpm
           tags: |
-            type=sha
+            type=sha,suffix=-${{ github.run_number }}
             type=raw,value=latest,enable={{is_default_branch}}
       - name: build
         uses: docker/build-push-action@v3
@@ -139,7 +139,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/nginx
           tags: |
-            type=sha
+            type=sha,suffix=-${{ github.run_number }}
             type=raw,value=latest,enable={{is_default_branch}}
       - name: build
         uses: docker/build-push-action@v3
