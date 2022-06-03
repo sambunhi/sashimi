@@ -55,6 +55,7 @@ jobs:
       - name: phpunit
         run: $PHP ./vendor/bin/phpunit
   fpm-image:
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: php-install
     runs-on: ubuntu-latest
     permissions:
@@ -92,6 +93,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
   nginx-image:
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: frontend
     runs-on: ubuntu-latest
     permissions:
