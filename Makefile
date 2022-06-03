@@ -4,11 +4,23 @@ COMPOSE_PREFIX_CMD := DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
 
 COMMAND ?= /bin/sh
 
+IN_PHP81_COMPOSER := docker run --rm \
+	-u "$(shell id -u):$(shell id -g)" \
+	-v $(shell pwd):/var/www/html \
+	-w /var/www/html \
+	laravelsail/php81-composer:latest
+
 # --------------------------
 
 .PHONY: deploy
 deploy:			## Start using Prod Image in Prod Mode
 	${COMPOSE_PREFIX_CMD} docker-compose -f docker-compose.prod.yml up --build -d
+
+vendor:
+	${IN_PHP81_COMPOSER} composer install --ignore-platform-reqs
+
+.env:
+	${IN_PHP81_COMPOSER} /bin/bash -c "composer run-script post-root-package-install && composer run-script post-create-project-cmd"
 
 .PHONY: up
 up:				## Start service
@@ -20,7 +32,7 @@ build-up:       ## Start service, rebuild if necessary
 	${COMPOSE_PREFIX_CMD} docker-compose up --build -d
 
 .PHONY: build
-build:			## Build The Image
+build: vendor .env ## Install dependencies and build the image
 	${COMPOSE_PREFIX_CMD} docker-compose build
 
 .PHONY: down
