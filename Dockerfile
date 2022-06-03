@@ -1,9 +1,9 @@
 # ---------------------------------------------- Build Time Arguments --------------------------------------------------
-ARG PHP_VERSION="7.4"
+ARG PHP_VERSION="8.1"
 ARG PHP_ALPINE_VERSION="3.15"
 ARG NGINX_VERSION="1.21"
 ARG COMPOSER_VERSION="2"
-ARG XDEBUG_VERSION="3.1.3"
+ARG XDEBUG_VERSION="3.1.4"
 ARG COMPOSER_AUTH
 ARG APP_BASE_DIR="."
 
@@ -20,9 +20,6 @@ FROM php:${PHP_VERSION}-fpm-alpine${PHP_ALPINE_VERSION} AS base
 
 # Required Args ( inherited from start of file, or passed at build )
 ARG XDEBUG_VERSION
-
-# Maintainer label
-LABEL maintainer="sherifabdlnaby@gmail.com"
 
 # Set SHELL flags for RUN commands to allow -e and pipefail
 # Rationale: https://github.com/hadolint/hadolint/wiki/DL4006
@@ -43,6 +40,7 @@ RUN apk add --no-cache --virtual .build-deps \
       icu-dev       \
  # PHP Extensions --------------------------------- \
  && docker-php-ext-install -j$(nproc) \
+      bcmath      \
       intl        \
       opcache     \
       pdo_mysql   \
@@ -114,10 +112,6 @@ COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 USER www-data
-
-# Common PHP Frameworks Env Variables
-ENV APP_ENV prod
-ENV APP_DEBUG 0
 
 # Validate FPM config (must use the non-root user)
 RUN php-fpm -t
@@ -211,13 +205,6 @@ USER root
 RUN apk --no-cache add git openssh bash; \
  # Enable Xdebug
  docker-php-ext-enable xdebug
-
-# For Xdebuger to work, it needs the docker host IP
-# - in Mac AND Windows, `host.docker.internal` resolve to Docker host IP
-# - in Linux, `172.17.0.1` is the host IP
-# By default, `host.docker.internal` is set as extra host in docker-compose.yml, so it also works in Linux without any
-# additional setting. This env is reserved for people who want to customize their own compose configuration.
-ENV XDEBUG_CLIENT_HOST="host.docker.internal"
 
 # ---------------------------------------------------- Scripts ---------------------------------------------------------
 

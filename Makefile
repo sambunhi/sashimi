@@ -6,58 +6,76 @@ COMMAND ?= /bin/sh
 
 # --------------------------
 
-.PHONY: deploy up build-up build down start stop logs images ps command \
-	command-root shell-root shell restart rm help
-
+.PHONY: deploy
 deploy:			## Start using Prod Image in Prod Mode
 	${COMPOSE_PREFIX_CMD} docker-compose -f docker-compose.prod.yml up --build -d
 
+.PHONY: up
 up:				## Start service
 	@echo "Starting Application \n (note: Web container will wait App container to start before starting)"
 	${COMPOSE_PREFIX_CMD} docker-compose up -d
 
+.PHONY: build-up
 build-up:       ## Start service, rebuild if necessary
 	${COMPOSE_PREFIX_CMD} docker-compose up --build -d
 
+.PHONY: build
 build:			## Build The Image
 	${COMPOSE_PREFIX_CMD} docker-compose build
 
+.PHONY: down
 down:			## Down service and do clean up
 	${COMPOSE_PREFIX_CMD} docker-compose down
 
+.PHONY: start
 start:			## Start Container
 	${COMPOSE_PREFIX_CMD} docker-compose start
 
+.PHONY: stop
 stop:			## Stop Container
 	${COMPOSE_PREFIX_CMD} docker-compose stop
 
+.PHONY: logs
 logs:			## Tail container logs with -n 1000
 	@${COMPOSE_PREFIX_CMD} docker-compose logs --follow --tail=100
 
+.PHONY: images
 images:			## Show Image created by this Makefile (or Docker-compose in docker)
 	@${COMPOSE_PREFIX_CMD} docker-compose images
 
+.PHONY: ps
 ps:			## Show Containers Running
 	@${COMPOSE_PREFIX_CMD} docker-compose ps
 
+.PHONY: command
 command:	  ## Execute command ( make command COMMAND=<command> )
 	@${COMPOSE_PREFIX_CMD} docker-compose run --rm app ${COMMAND}
 
+.PHONY: command-root
 command-root:	 ## Execute command as root ( make command-root COMMAND=<command> )
 	@${COMPOSE_PREFIX_CMD} docker-compose run --rm -u root app ${COMMAND}
 
+.PHONY: shell-root
 shell-root:			## Enter container shell as root
 	@${COMPOSE_PREFIX_CMD} docker-compose exec -u root app /bin/sh
 
+.PHONY: shell
 shell:			## Enter container shell
 	@${COMPOSE_PREFIX_CMD} docker-compose exec app /bin/sh
 
+.PHONY: restart
 restart:		## Restart container
 	@${COMPOSE_PREFIX_CMD} docker-compose restart
 
+.PHONY: rm
 rm:				## Remove current container
 	@${COMPOSE_PREFIX_CMD} docker-compose rm -f
 
+.PHONY: tinker
+tinker:			## Start a new Laravel Tinker session
+	@${COMPOSE_PREFIX_CMD} docker-compose exec app php artisan tinker
+
+.PHONY: help
 help:       	## Show this help.
 	@echo "\n\nMake Application Docker Images and Containers using Docker-Compose files"
 	@echo "Make sure you are using \033[0;32mDocker Version >= 20.1\033[0m & \033[0;32mDocker-Compose >= 1.27\033[0m "
