@@ -1,0 +1,56 @@
+name: CI
+on: push
+env:
+  PHP: php81
+  PHP_ALPINE_DEPS: |
+    php81-ctype php81-curl php81-dom php81-fileinfo php81-xml php81-mbstring
+    php81-openssl php81-phar php81-tokenizer php81-xmlwriter php81-session
+  COMPOSER_ALPINE_DEPS: |
+    php81-curl php81-iconv php81-mbstring php81-openssl php81-phar php81-zip
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install
+        run: npm ci
+      - name: build
+        run: npm run development
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-with-debugging
+          path: public
+  php-install:
+    runs-on: ubuntu-latest
+    container: alpine:3.16
+    steps:
+      - uses: actions/checkout@v3
+      - name: prepare
+        run: apk add composer $PHP $COMPOSER_ALPINE_DEPS $PHP_ALPINE_DEPS
+      - name: install
+        run: $PHP /usr/bin/composer.phar install
+      - name: pack
+        run: tar -cf vendor.tar vendor
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: vendor-with-dev
+          path: vendor.tar
+  phpunit:
+    needs: php-install
+    runs-on: ubuntu-latest
+    container: alpine:3.16
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: vendor-with-dev
+      - name: unpack
+        run: tar -xf vendor.tar
+      - name: prepare
+        run: apk add composer php81 $PHP_ALPINE_DEPS
+      - name: env
+        run: cp .env.example .env && $PHP artisan key:generate
+      - name: phpunit
+        run: $PHP ./vendor/bin/phpunit
