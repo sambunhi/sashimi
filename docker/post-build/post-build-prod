@@ -1,8 +1,0 @@
-#!/bin/sh
-set -eu
-# Put Custom Ad-hoc scripts after build. Like framework specific checks, etc.
-
-echo "► Optimizing Laravel application"
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
