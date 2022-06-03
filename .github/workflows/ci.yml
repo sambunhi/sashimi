@@ -30,11 +30,13 @@ jobs:
         run: apk add composer $PHP $COMPOSER_ALPINE_DEPS $PHP_ALPINE_DEPS
       - name: install
         run: $PHP /usr/bin/composer.phar install
+      - name: pack
+        run: tar -cf vendor.tar vendor
       - name: upload
         uses: actions/upload-artifact@v3
         with:
           name: vendor-with-dev
-          path: vendor
+          path: vendor.tar
   phpunit:
     needs: php-install
     runs-on: ubuntu-latest
@@ -44,6 +46,8 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: vendor-with-dev
+      - name: unpack
+        run: tar -xf vendor.tar
       - name: prepare
         run: apk add composer php81 $PHP_ALPINE_DEPS
       - name: env
