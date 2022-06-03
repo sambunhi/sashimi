@@ -1,0 +1,13 @@
+name: style
+on: push
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: prepare
+        run: composer global require squizlabs/php_codesniffer
+      - name: phpcs
+        run: >
+          $(composer global config bin-dir --absolute --quiet)/phpcs
+          --standard=PSR2 app/ config/ routes/
