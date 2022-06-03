@@ -5,6 +5,7 @@
     "keywords": ["sambunhi", "salmon", "sashimi"],
     "require": {
         "php": "^8.1",
+        "ext-session": "*",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^9.11"
     },
