@@ -54,9 +54,32 @@ jobs:
         run: cp .env.example .env && $PHP artisan key:generate
       - name: phpunit
         run: $PHP ./vendor/bin/phpunit
-  fpm-image:
+  php-trim:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: php-install
+    runs-on: ubuntu-latest
+    container: alpine:3.16
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: vendor-with-dev
+      - name: unpack
+        run: tar -xf vendor.tar
+      - name: prepare
+        run: apk add composer $PHP $COMPOSER_ALPINE_DEPS $PHP_ALPINE_DEPS
+      - name: trim
+        run: $PHP /usr/bin/composer.phar install --no-dev
+      - name: pack
+        run: tar -cf vendor.tar vendor
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: vendor
+          path: vendor.tar
+  fpm-image:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: php-trim
     runs-on: ubuntu-latest
     permissions:
       contents: read
