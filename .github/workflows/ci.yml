@@ -49,11 +49,13 @@ jobs:
       - name: unpack
         run: tar -xf vendor.tar
       - name: prepare
-        run: apk add composer php81 $PHP_ALPINE_DEPS
+        run: >
+          apk add composer $PHP $PHP_ALPINE_DEPS $PHP-pecl-xdebug &&
+          printf 'zend_extension=xdebug.so\nxdebug.mode=coverage\n' > /etc/$PHP/conf.d/50_xdebug.ini
       - name: env
         run: cp .env.example .env && $PHP artisan key:generate
       - name: phpunit
-        run: $PHP ./vendor/bin/phpunit
+        run: $PHP ./vendor/bin/phpunit --coverage-text
   php-trim:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: php-install
