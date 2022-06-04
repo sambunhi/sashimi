@@ -81,7 +81,9 @@ jobs:
           path: vendor.tar
   fpm-image:
     if: ${{ github.ref == 'refs/heads/main' }}
-    needs: php-trim
+    needs:
+      - php-trim
+      - phpunit
     runs-on: ubuntu-latest
     permissions:
       contents: read
