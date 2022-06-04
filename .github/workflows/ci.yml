@@ -55,7 +55,7 @@ jobs:
       - name: env
         run: cp .env.example .env && $PHP artisan key:generate
       - name: phpunit
-        run: $PHP ./vendor/bin/phpunit --coverage-text
+        run: $PHP ./vendor/bin/phpunit --coverage-text --colors=never
   php-trim:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: php-install
