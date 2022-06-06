@@ -76,7 +76,9 @@ class ApiController extends Controller
         $keywords = $request->get('keywords');
         $sources = $request->get('sources');
 
-        $articles = DB::table('articles')->leftJoin('trends', 'articles.id', '=', 'trends.article_id')->whereNotNull('nltk_at')->whereBetween('published_at', [$date_begin, $date_end])->whereNotNull('keyword');
+        $articles = DB::table('articles')->leftJoin('trends', 'articles.id', '=', 'trends.article_id')
+            ->whereNotNull('nltk_at')->whereBetween('published_at', [$date_begin, $date_end])
+            ->whereNotNull('keyword');
 
         if (count($keywords) > 0) {
             $articles->whereIn('keyword', $keywords);
@@ -87,7 +89,8 @@ class ApiController extends Controller
         }
 
         $trends = [
-            'trends' => $articles->select(DB::raw('published_at as date, keyword, count(*) as cnt'))->groupBy('published_at', 'keyword')->get()
+            'trends' => $articles->select(DB::raw('published_at as date, keyword, count(*) as cnt'))
+                ->groupBy('published_at', 'keyword')->get()
         ];
 
         return $trends;
@@ -98,7 +101,8 @@ class ApiController extends Controller
         $date = $request->get('date');
         $sources = $request->get('source_id');
 
-        $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url')->where('published_at', $date)->whereNotNull('nltk_at');
+        $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url')
+            ->where('published_at', $date)->whereNotNull('nltk_at');
 
         if (count($sources) > 0) {
             $articles->whereIn('source_id', $sources);
