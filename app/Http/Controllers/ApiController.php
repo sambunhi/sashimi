@@ -54,6 +54,16 @@ class ApiController extends Controller
     }
 
     public function getArticles(Request $request) {
+        $date = $request->get('date');
+        $sources = $request->get('source_id');
+
+        $articles = Article::with('source')->with('trend')->select('id','source_id','title', 'url')->where('published_at', $date)->whereNotNull('nltk_at');
+
+        if( count($sources) > 0 ) {
+            $articles->whereIn('source_id', $sources);
+        }
+
+        return $articles->get();
 
     }
 }

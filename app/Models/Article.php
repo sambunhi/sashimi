@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Article extends Model
 {
     use HasFactory;
+
+    public function trend() {
+        return $this->hasMany(Trend::class, 'article_id', 'id')->select('article_id','keyword', 'cnt');
+    }
+
+    public function source() {
+        return $this->belongsTo(Source::class, 'source_id', 'id')->select('id', 'name');
+    }
 }
