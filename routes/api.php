@@ -18,4 +18,5 @@ use App\Http\Controllers\ApiController;
 
 Route::prefix('v1')->controller(ApiController::class)->group(function() {
     Route::get('/crawler/link', 'getLinksNeedHandle');
+    Route::get('/crawler', 'getSystemInfo');
 });

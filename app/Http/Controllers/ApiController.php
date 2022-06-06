@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-use App\Models\Article;
+use App\Models\{Article, Source, Keyword};
 
 class ApiController extends Controller
 {
@@ -21,7 +21,12 @@ class ApiController extends Controller
     }
 
     public function getSystemInfo(Request $request) {
+        $crawlerInfo = [
+            'sources' => Source::select(['id', 'name', 'url'])->get(),
+            'keywords' => Keyword::pluck('name')
+        ];
 
+        return $crawlerInfo;
     }
 
     public function getArticles(Request $request) {
