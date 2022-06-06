@@ -22,4 +22,5 @@ Route::prefix('v1')->controller(ApiController::class)->group(function() {
     Route::get('/trends', 'getTrends');
     Route::get('/articles', 'getArticles');
     Route::post('/crawler', 'saveCrawlerLinks');
+    Route::post('/article', 'saveArticleKeywords');
 });

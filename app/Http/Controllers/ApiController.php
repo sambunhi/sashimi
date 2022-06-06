@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\{Article, Source, Keyword};
+use App\Models\{Article, Source, Keyword, Trend};
 
 class ApiController extends Controller
 {
@@ -31,7 +31,26 @@ class ApiController extends Controller
     }
 
     public function saveArticleKeywords(Request $request) {
+        $article = Article::where('url', $request->get('url'))->first();
 
+        if($article != null) {
+            DB::transaction(function () use($request, $article) {
+                foreach($request->get('keywords') as $keyword => $cnt) {
+                    Trend::updateOrCreate([
+                        'article_id' => $article->id,
+                        'keyword' => $keyword
+                    ], [
+                        'article_id' => $article->id,
+                        'keyword' => $keyword,
+                        'cnt' => $cnt
+                    ]);
+                }
+            });
+
+            return "success";
+        } else {
+            return "url not found";
+        }
     }
 
     public function getSystemInfo(Request $request) {
