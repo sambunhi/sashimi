@@ -9,6 +9,8 @@ class Article extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['title', 'url', 'source_id', 'published_at'];
+
     public function trend() {
         return $this->hasMany(Trend::class, 'article_id', 'id')->select('article_id','keyword', 'cnt');
     }

@@ -10,7 +10,20 @@ use App\Models\{Article, Source, Keyword};
 class ApiController extends Controller
 {
     public function saveCrawlerLinks(Request $request) {
+        DB::transaction(function () use($request) {
+            foreach($request->json() as $link) {
+                Article::updateOrCreate(['url'=>$link['url']], [
+                    'title'=>$link['title'],
+                    'url'=>$link['url'],
+                    'source_id'=>$link['source_id'],
+                    'published_at'=>$link['published_at']
+                ]);
+            }
+        });
 
+        return [
+            'affect_num' => count($request->json())
+        ];
     }
 
     public function getLinksNeedHandle(Request $request) {
