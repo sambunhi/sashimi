@@ -141,7 +141,7 @@ class ApiController extends Controller
         $result = [];
         foreach ($articles->get() as $article) {
             if ($article['trend'] != []) {
-                $result += [$article];
+                array_push($result, $article);
             }
         }
 
