@@ -15,6 +15,13 @@ class ApiController extends Controller
 {
     public function saveCrawlerLinks(Request $request)
     {
+        $request->validate([
+            '*.url'=>'required|url',
+            '*.title'=>'required',
+            '*.source_id'=>'required|exists:sources,id',
+            '*.published_at'=>'required|date_format:Y-m-d'
+        ]);
+
         DB::transaction(function () use ($request) {
             foreach ($request->json() as $link) {
                 Article::updateOrCreate(['url'=>$link['url']], [
@@ -26,9 +33,10 @@ class ApiController extends Controller
             }
         });
 
-        return [
+        return response()->json([
+            'result'=>'success',
             'affect_num' => count($request->json())
-        ];
+        ]);
     }
 
     public function getLinksNeedHandle(Request $request)
@@ -38,29 +46,37 @@ class ApiController extends Controller
 
     public function saveArticleKeywords(Request $request)
     {
+        $request->validate([
+            'url'=>'required|exists:articles,url|url',
+            'keywords'=>'array',
+            'keywords.*'=>'integer|gte:1'
+        ]);
+
         $article = Article::where('url', $request->get('url'))->first();
 
-        if ($article != null) {
-            DB::transaction(function () use ($request, $article) {
+        DB::transaction(function () use ($request, $article) {
+            if ($request->filled('keywords')) {
                 foreach ($request->get('keywords') as $keyword => $cnt) {
-                    Trend::updateOrCreate([
-                        'article_id' => $article->id,
-                        'keyword' => $keyword
-                    ], [
-                        'article_id' => $article->id,
-                        'keyword' => $keyword,
-                        'cnt' => $cnt
-                    ]);
+                    if (Keyword::where("name", $keyword)->exists()) {
+                        Trend::updateOrCreate([
+                            'article_id' => $article->id,
+                            'keyword' => $keyword
+                        ], [
+                            'article_id' => $article->id,
+                            'keyword' => $keyword,
+                            'cnt' => $cnt
+                        ]);
+                    }
                 }
+            }
 
-                $article->nltk_at = Carbon::now();
-                $article->save();
-            });
+            $article->nltk_at = Carbon::now();
+            $article->save();
+        });
 
-            return "success";
-        } else {
-            return "url not found";
-        }
+        return response()->json([
+            'result'=>'success'
+        ]);
     }
 
     public function getSystemInfo(Request $request)
@@ -70,11 +86,16 @@ class ApiController extends Controller
             'keywords' => Keyword::pluck('name')
         ];
 
-        return $crawlerInfo;
+        return response()->json($crawlerInfo);
     }
 
     public function getTrends(Request $request)
     {
+        $request->validate([
+            'date_start'=>'required|date_format:Y-m-d',
+            'date_end'=>'required|date_format:Y-m-d'
+        ]);
+
         $date_begin = $request->get('date_start');
         $date_end = $request->get('date_end');
 
@@ -97,11 +118,15 @@ class ApiController extends Controller
                 ->groupBy('published_at', 'keyword')->get()
         ];
 
-        return $trends;
+        return response()->json($trends);
     }
 
     public function getArticles(Request $request)
     {
+        $request->validate([
+            'date'=>'required|date_format:Y-m-d'
+        ]);
+
         $date = $request->get('date');
 
         $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url', 'published_at')
