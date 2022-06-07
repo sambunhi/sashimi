@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property Carbon $published_at
+ */
 class Article extends Model
 {
     use HasFactory;
+
+    protected $dates = [
+        'published_at',
+    ];
 
     protected $fillable = ['title', 'url', 'source_id', 'published_at'];
 
