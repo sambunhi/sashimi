@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 use App\Models\Article;
 use App\Models\Source;
@@ -103,9 +104,12 @@ class ApiController extends Controller
             ->whereNotNull('nltk_at')->whereBetween('published_at', [$date_begin, $date_end])
             ->whereNotNull('keyword');
 
+        $keywords = [];
         if ($request->filled('keywords')) {
             $keywords = array_map('trim', explode(',', $request->get('keywords')));
             $articles->whereIn('keyword', $keywords);
+        } else {
+            $keywords = Keyword::pluck('name');
         }
 
         if ($request->filled('sources')) {
@@ -137,6 +141,13 @@ class ApiController extends Controller
             $articles->whereIn('source_id', $sources);
         }
 
-        return $articles->get();
+        $result = [];
+        foreach ($articles->get() as $article) {
+            if ($article['trend'] != []) {
+                $result += [$article];
+            }
+        }
+
+        return $result;
     }
 }
