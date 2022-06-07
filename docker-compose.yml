@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      dockerfile: ./containers/Containerfile-fpm
+      args:
+        PHP: '${PHP}'
+        PHP_ALPINE_DEPS: '${PHP_ALPINE_DEPS}'
+    restart: unless-stopped
+    volumes:
+      - ./:/srv/http
+    network_mode: service:web
+  web:
+    build:
+      dockerfile: ./containers/Containerfile-nginx
+    volumes:
+      - ./public:/srv/http/public
+    ports:
+      - 127.0.0.1:80:8000
+  db:
+    image: mariadb
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - 127.0.0.1:3306:3306
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MARIADB_DATABASE: '${DB_DATABASE}'
+
+volumes:
+  mariadb:
+    driver: local
