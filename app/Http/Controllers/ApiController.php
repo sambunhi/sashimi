@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 use App\Models\Article;
 use App\Models\Source;
@@ -51,6 +52,9 @@ class ApiController extends Controller
                         'cnt' => $cnt
                     ]);
                 }
+
+                $article->nltk_at = Carbon::now();
+                $article->save();
             });
 
             return "success";
