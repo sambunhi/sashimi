@@ -104,12 +104,9 @@ class ApiController extends Controller
             ->whereNotNull('nltk_at')->whereBetween('published_at', [$date_begin, $date_end])
             ->whereNotNull('keyword');
 
-        $keywords = [];
         if ($request->filled('keywords')) {
             $keywords = array_map('trim', explode(',', $request->get('keywords')));
             $articles->whereIn('keyword', $keywords);
-        } else {
-            $keywords = Keyword::pluck('name');
         }
 
         if ($request->filled('sources')) {
