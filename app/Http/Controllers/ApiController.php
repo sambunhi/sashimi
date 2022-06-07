@@ -86,6 +86,11 @@ class ApiController extends Controller
 
     public function getTrends(Request $request)
     {
+        $request->validate([
+            'date_start'=>'required|date_format:Y-m-d',
+            'date_end'=>'required|date_format:Y-m-d'
+        ]);
+
         $date_begin = $request->get('date_start');
         $date_end = $request->get('date_end');
 
