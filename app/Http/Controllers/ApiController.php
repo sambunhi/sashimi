@@ -15,6 +15,13 @@ class ApiController extends Controller
 {
     public function saveCrawlerLinks(Request $request)
     {
+        $request->validate([
+            '*.url'=>'required|url',
+            '*.title'=>'required',
+            '*.source_id'=>'required|exists:sources,id',
+            '*.published_at'=>'required|date_format:Y-m-d'
+        ]);
+
         DB::transaction(function () use ($request) {
             foreach ($request->json() as $link) {
                 Article::updateOrCreate(['url'=>$link['url']], [
