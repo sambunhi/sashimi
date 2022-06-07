@@ -46,21 +46,25 @@ class ApiController extends Controller
     public function saveArticleKeywords(Request $request)
     {
         $request->validate([
-            'url'=>'required|exists:articles,url|url'
+            'url'=>'required|exists:articles,url|url',
+            'keywords'=>'required|array',
+            'keywords.*'=>'integer|gte:1'
         ]);
 
         $article = Article::where('url', $request->get('url'))->first();
 
         DB::transaction(function () use ($request, $article) {
             foreach ($request->get('keywords') as $keyword => $cnt) {
-                Trend::updateOrCreate([
-                    'article_id' => $article->id,
-                    'keyword' => $keyword
-                ], [
-                    'article_id' => $article->id,
-                    'keyword' => $keyword,
-                    'cnt' => $cnt
-                ]);
+                if (Keyword::where("name", $keyword)->exists()) {
+                    Trend::updateOrCreate([
+                        'article_id' => $article->id,
+                        'keyword' => $keyword
+                    ], [
+                        'article_id' => $article->id,
+                        'keyword' => $keyword,
+                        'cnt' => $cnt
+                    ]);
+                }
             }
 
             $article->nltk_at = Carbon::now();
@@ -68,7 +72,6 @@ class ApiController extends Controller
         });
 
         return "success";
-
     }
 
     public function getSystemInfo(Request $request)
