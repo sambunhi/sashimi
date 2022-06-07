@@ -77,7 +77,6 @@ class ApiController extends Controller
         return response()->json([
             'result'=>'success'
         ]);
-
     }
 
     public function getSystemInfo(Request $request)
