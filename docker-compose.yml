@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      dockerfile: ./containers/Containerfile-fpm
+      args:
+        PHP: php81
+        PHP_ALPINE_DEPS: >
+          php81-ctype php81-curl php81-dom php81-fileinfo php81-xml php81-mbstring
+          php81-openssl php81-phar php81-tokenizer php81-xmlwriter php81-session
+          php81-pecl-redis php81-pdo_mysql
+        COMPOSER_ALPINE_DEPS: >
+          php81-curl php81-iconv php81-mbstring php81-openssl php81-phar php81-zip
+    restart: unless-stopped
+    volumes:
+      - ./:/srv/http
+    network_mode: service:web
+  web:
+    build:
+      dockerfile: ./containers/Containerfile-nginx
+    volumes:
+      - ./public:/srv/http/public
+    ports:
+      - 127.0.0.1:80:8000
+  db:
+    image: mariadb
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - 127.0.0.1:3306:3306
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MARIADB_DATABASE: '${DB_DATABASE}'
+
+volumes:
+  mariadb:
+    driver: local
