@@ -138,6 +138,10 @@ class ApiController extends Controller
             $articles->whereIn('source_id', $sources);
         }
 
+        if ($request->filled('keyword')) {
+            $articles->whereRelation('trend', 'keyword', $request->get('keyword'));
+        }
+
         $result = [];
         foreach ($articles->get() as $article) {
             if ($article['trend'] != []) {
