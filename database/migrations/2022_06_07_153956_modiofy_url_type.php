@@ -14,8 +14,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('articles', function (Blueprint $table) {
-            $table->texr('url')->change();
-            $table->texr('title')->change();
+            $table->text('url')->change();
+            $table->text('title')->change();
         });
     }
 
