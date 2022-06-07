@@ -33,9 +33,10 @@ class ApiController extends Controller
             }
         });
 
-        return [
+        return response()->json([
+            'result'=>'success',
             'affect_num' => count($request->json())
-        ];
+        ]);
     }
 
     public function getLinksNeedHandle(Request $request)
@@ -73,7 +74,10 @@ class ApiController extends Controller
             $article->save();
         });
 
-        return "success";
+        return response()->json([
+            'result'=>'success'
+        ]);
+
     }
 
     public function getSystemInfo(Request $request)
@@ -83,7 +87,7 @@ class ApiController extends Controller
             'keywords' => Keyword::pluck('name')
         ];
 
-        return $crawlerInfo;
+        return response()->json($crawlerInfo);
     }
 
     public function getTrends(Request $request)
@@ -115,7 +119,7 @@ class ApiController extends Controller
                 ->groupBy('published_at', 'keyword')->get()
         ];
 
-        return $trends;
+        return response()->json($trends);
     }
 
     public function getArticles(Request $request)
