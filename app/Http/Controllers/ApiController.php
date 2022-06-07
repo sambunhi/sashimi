@@ -75,20 +75,20 @@ class ApiController extends Controller
 
     public function getTrends(Request $request)
     {
-        $date_begin = $request->get('date_range')[0];
-        $date_end = $request->get('date_range')[1];
-        $keywords = $request->get('keywords');
-        $sources = $request->get('sources');
+        $date_begin = $request->get('date_start');
+        $date_end = $request->get('date_end');
 
         $articles = DB::table('articles')->leftJoin('trends', 'articles.id', '=', 'trends.article_id')
             ->whereNotNull('nltk_at')->whereBetween('published_at', [$date_begin, $date_end])
             ->whereNotNull('keyword');
 
-        if (count($keywords) > 0) {
+        if ($request->filled('keywords')) {
+            $keywords = array_map('trim', explode(',', $request->get('keywords')));
             $articles->whereIn('keyword', $keywords);
         }
 
-        if (count($sources) > 0) {
+        if ($request->filled('sources')) {
+            $sources = array_map('trim', explode(',', $request->get('sources')));
             $articles->whereIn('source_id', $sources);
         }
 
@@ -103,12 +103,12 @@ class ApiController extends Controller
     public function getArticles(Request $request)
     {
         $date = $request->get('date');
-        $sources = $request->get('source_id');
 
-        $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url')
+        $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url', 'published_at')
             ->where('published_at', $date)->whereNotNull('nltk_at');
 
-        if (count($sources) > 0) {
+        if ($request->filled('source_id')) {
+            $sources = array_map('trim', explode(',', $request->get('source_id')));
             $articles->whereIn('source_id', $sources);
         }
 
