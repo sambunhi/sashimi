@@ -7,7 +7,7 @@
     <meta property="og:title" content="網路聲量變化" />
     <meta property="og:description" content="TSMC 期末專案" />
     <meta property="og:image" content="https://sambunhi.nycu.one/assets/cover.jpg" />
-    <link rel="stylesheet" href="/assets/tocas.css" />
+    <link rel="stylesheet" href="https://sambunhi.nycu.one/assets/tocas.css" />
     <style>
       body {
         font-family: sans-serif;
@@ -19,13 +19,19 @@
       <div class="ts-container">
         <div class="ts-row is-middle-aligned">
           <div class="column is-fluid is-center-aligned">
-            <div class="ts-header is-huge is-heavy">Sambunhi</div>
+            <div class="ts-header is-huge is-heavy">🍣 Sambunhi</div>
           </div>
         </div>
         <div class="ts-divider is-section"></div>
 
-        <div class="ts-header is-huge">網路聲量變化</div>
-        <div id="svg" style="width: 640px; height: 400px"></div>
+        <div class="ts-tab is-pilled is-fluid">
+          <a class="item is-active" id="duration-3d" onclick="updateChart(3);"> 最近 3 天 </a>
+          <a class="item" id="duration-7d" onclick="updateChart(7);"> 最近 7 天 </a>
+          <a class="item" id="duration-14d" onclick="updateChart(14);"> 最近 14 天 </a>
+          <a class="item" id="duration-30d" onclick="updateChart(30);"> 最近 30 天 </a>
+        </div>
+        <div class="ts-header is-huge mt-4 mb-4">網路聲量變化</div>
+        <div id="chart" style="height: 400px; text-align: center"></div>
         <div id="results">Please click the above chart.</div>
         <template id="tmpl">
           <div class="ts-segment">
@@ -61,19 +67,19 @@
       ) {
         // Default variables
         marginTop = 20; // top margin, in pixels
-        marginRight = 30; // right margin, in pixels
-        marginBottom = 30; // bottom margin, in pixels
+        marginBottom = 40; // bottom margin, in pixels
         marginLeft = 40; // left margin, in pixels
+        marginRight = 30; // right margin, in pixels
         xRange = [marginLeft, width - marginRight]; // [left, right]
         yRange = [height - marginBottom, marginTop]; // [bottom, top]
         mixBlendMode = "multiply"; // blend mode of lines
 
         // Compute values.
+        const defined = (d, i) => !isNaN(X[i]) && !isNaN(Y[i]);
         const X = d3.map(data, x);
         const Y = d3.map(data, y);
         const Z = d3.map(data, z);
         const O = d3.map(data, (d) => d);
-        const defined = (d, i) => !isNaN(X[i]) && !isNaN(Y[i]);
         const D = d3.map(data, defined);
         const C = {}; // keyword -> color mapping
         const T = Z; // Compute titles.
@@ -84,13 +90,16 @@
         const zDomain = new d3.InternSet(Z);
         const I = d3.range(X.length).filter((i) => zDomain.has(Z[i])); // Omit any data not present in the z-domain.
 
+        const duration = (xDomain[1].getTime() - xDomain[0].getTime()) / 86400_000;
+
         // Construct scales and axes.
         const xScale = d3.scaleUtc(xDomain, xRange);
         const yScale = d3.scaleLinear(yDomain, yRange);
         const xAxis = d3
           .axisBottom(xScale)
-          .ticks(width / 80)
-          .tickSizeOuter(0);
+          .ticks(Math.min(width / 80, duration))
+          .tickSizeOuter(0)
+          .tickFormat((d, i) => d.toISOString().substr(0, 10));
         const yAxis = d3.axisLeft(yScale).ticks(height / 60);
 
         // Construct a line generator.
@@ -102,8 +111,8 @@
           .y((i) => yScale(Y[i]));
 
         // Base canvas
-        const svg = d3
-          .select("#svg")
+        const chart = d3.select("#chart").html("");
+        const svg = chart
           .append("svg")
           .attr("width", width)
           .attr("height", height)
@@ -118,7 +127,8 @@
 
         // An optional Voronoi display (for fun).
         if (voronoi)
-          svg.append("path")
+          svg
+            .append("path")
             .attr("fill", "none")
             .attr("stroke", "#ccc")
             .attr(
@@ -133,25 +143,29 @@
             );
 
         // X-Axis
-        svg.append("g")
+        svg
+          .append("g")
           .attr("transform", `translate(0, ${height - marginBottom})`)
           .call(xAxis);
 
         // Y-Axis
-        svg.append("g")
+        svg
+          .append("g")
           .attr("transform", `translate(${marginLeft}, 0)`)
           .call(yAxis)
-          .call((g) => g.select(".domain").remove())
-          .call(
-            voronoi
-              ? () => {}
-              : (g) =>
-                  g
-                    .selectAll(".tick line")
-                    .clone()
-                    .attr("x2", width - marginLeft - marginRight)
-                    .attr("stroke-opacity", 0.1)
-          );
+          .call((g) => g.select(".domain").remove());
+
+        // Voronoi
+        svg.call(
+          voronoi
+            ? () => {}
+            : (g) =>
+                g
+                  .selectAll(".tick line")
+                  .clone()
+                  .attr("x2", width - marginLeft - marginRight)
+                  .attr("stroke-opacity", 0.1)
+        );
 
         // Data lines
         const path = svg
@@ -172,23 +186,36 @@
         const dot = svg.append("g").attr("display", "none");
         dot.append("circle").attr("r", 2.5);
 
-        dot.append("text")
+        dot
+          .append("text")
           .attr("font-family", "sans-serif")
           .attr("font-size", 10)
           .attr("text-anchor", "middle")
           .attr("y", -8);
 
+        // Legend
+        let legendY = 80;
+        for (name in C) {
+          svg.append("circle").attr("cx", 50).attr("cy", legendY).attr("r", 6).style("fill", C[name]);
+          svg
+            .append("text")
+            .attr("x", 65)
+            .attr("y", legendY)
+            .attr("dominant-baseline", "middle")
+            .text(name)
+            .style("font-size", "16px");
+          legendY += 30;
+        }
+
         function click(event) {
           const [xm, ym] = d3.pointer(event);
-          const i = d3.least(I, (i) =>
-            Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)
-          ); // closest point
+          const i = d3.least(I, (i) => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
 
-          fetch(
-            `https://sambunhi.nycu.one/api/v1/articles?date=${X[i]
-              .toISOString()
-              .substr(0, 10)}&keywords=${Z[i]}`
-          )
+          keyword = "";
+          if (ym < height - marginBottom) keyword = Z[i];
+          date = X[i].toISOString().substr(0, 10);
+
+          fetch("https://sambunhi.nycu.one/api/v1/articles" + `?date=${date}&keyword=${keyword}`)
             .then((r) => r.json())
             .then((articles) => {
               console.log(articles);
@@ -219,18 +246,23 @@
             });
         }
 
+        const insideLegend = false;
         function pointermoved(event) {
           const [xm, ym] = d3.pointer(event);
-          const i = d3.least(I, (i) =>
-            Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)
-          ); // closest point
+          const i = d3.least(I, (i) => Math.hypot(xScale(X[i]) - xm, yScale(Y[i]) - ym)); // closest point
+
           path
             .style("stroke", ([z]) => (Z[i] === z ? null : "#ddd"))
             .filter(([z]) => Z[i] === z)
             .raise();
-          dot.attr("transform", `translate(${xScale(X[i])}, ${yScale(Y[i])})`);
-          if (T) dot.select("text").text(T[i]);
-          svg.property("value", O[i]).dispatch("input", { bubbles: true });
+
+          dot
+            .attr("transform", `translate(${xScale(X[i])}, ${yScale(Y[i])})`)
+            .select("text")
+            .text(T[i]);
+          svg.property("value", O[i]).dispatch("input", {
+            bubbles: true,
+          });
         }
 
         function pointerentered() {
@@ -250,60 +282,77 @@
     </script>
 
     <script>
-      fetch(
-        "https://sambunhi.nycu.one/api/v1/trends?date_start=2022-05-01&date_end=2022-06-30"
-      )
-        .then((r) => r.json())
-        .then((r) => {
-          let beginDate = "2099-00-00";
-          let endDate = "1000-00-00";
-          let keywords = [];
-          let trends = [];
-          let cnt = {};
-          for (let k of r.trends) {
-            if (beginDate > k.date) beginDate = k.date;
-            if (endDate < k.date) endDate = k.date;
-            if (undefined === cnt[k.keyword])
-              cnt[k.keyword] = new Map();
-            cnt[k.keyword].set(k.date, k.cnt);
-          }
+      window.addEventListener("load", (event) => {
+        updateChart(3);
+      });
 
-          const beginTs = new Date(beginDate).getTime();
-          const endTs = new Date(endDate).getTime();
-          for (let ts = beginTs; ts <= endTs; ts += 86400_000) {
-            let curDate = new Date(ts).toISOString().substr(0, 10);
-            for (k in cnt) {
-              trends.push({
-                date: curDate,
-                cnt: (cnt[k].get(curDate) || 0) + Math.random() * 0.5 - 0.1,
-                keyword: k,
-              });
+      function updateChart(durationDays) {
+        const btn3d = document.getElementById("duration-3d");
+        const btn7d = document.getElementById("duration-7d");
+        const btn14d = document.getElementById("duration-14d");
+        const btn30d = document.getElementById("duration-30d");
+
+        btn3d.classList.remove("is-active");
+        btn7d.classList.remove("is-active");
+        btn14d.classList.remove("is-active");
+        btn30d.classList.remove("is-active");
+
+        if (durationDays == 3) btn3d.classList.add("is-active");
+        if (durationDays == 7) btn7d.classList.add("is-active");
+        if (durationDays == 14) btn14d.classList.add("is-active");
+        if (durationDays == 30) btn30d.classList.add("is-active");
+
+        const endTs = new Date();
+        const beginTs = endTs - 86400_000 * (durationDays - 1);
+        let endDate = new Date(endTs).toISOString().substr(0, 10);
+        let beginDate = new Date(beginTs).toISOString().substr(0, 10);
+
+        fetch(`https://sambunhi.nycu.one/api/v1/trends?date_start=${beginDate}&date_end=${endDate}`)
+          .then((r) => r.json())
+          .then((r) => {
+            let beginDate = "2099-00-00";
+            let endDate = "1000-00-00";
+            let trends = [];
+            let cnt = {};
+            for (let k of r.trends) {
+              if (beginDate > k.date) beginDate = k.date;
+              if (endDate < k.date) endDate = k.date;
+              if (undefined === cnt[k.keyword]) cnt[k.keyword] = new Map();
+              cnt[k.keyword].set(k.date, k.cnt);
             }
-          }
-          return trends;
-        })
-        .then((trends) => {
-          console.log(trends);
-          chart = LineChart(trends, {
-            x: (d) => new Date(d.date),
-            y: (d) => d.cnt,
-            z: (d) => d.keyword,
-            yLabel: "網路聲量變化",
-            width: 640,
-            height: 400,
-            color: [
-              "#00A2FF",
-              "#61D836",
-              "#F8BA00",
-              "#D31976",
-              "#F0B24F",
-              "#892319",
-              "#6C6F39",
-              "#4D2501",
-            ],
-            voronoi: false,
+
+            const beginTs = new Date(beginDate).getTime();
+            const endTs = new Date(endDate).getTime();
+            for (let ts = beginTs; ts <= endTs; ts += 86400_000) {
+              let curDate = new Date(ts).toISOString().substr(0, 10);
+              for (k in cnt) {
+                trends.push({
+                  date: curDate,
+                  cnt: (cnt[k].get(curDate) || 0) + Math.random() * 0.5 - 0.1,
+                  keyword: k,
+                });
+              }
+            }
+            return trends;
+          })
+          .then((trends) => {
+            renderChart(trends);
           });
+      }
+
+      function renderChart(trends) {
+        console.log(trends);
+        const chart = LineChart(trends, {
+          x: (d) => new Date(d.date),
+          y: (d) => d.cnt,
+          z: (d) => d.keyword,
+          yLabel: "網路聲量變化",
+          width: 640,
+          height: 400,
+          color: ["#00A2FF", "#61D836", "#D31976", "#F8BA00", "#9814D6", "#892319", "#6C6F39", "#4D2501"],
+          voronoi: false,
         });
+      }
     </script>
   </body>
 </html>
