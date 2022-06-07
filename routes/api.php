@@ -21,6 +21,6 @@ Route::prefix('v1')->controller(ApiController::class)->group(function () {
     Route::get('/crawler', 'getSystemInfo');
     Route::get('/trends', 'getTrends');
     Route::get('/articles', 'getArticles');
-    Route::put('/crawler', 'saveCrawlerLinks');
+    Route::post('/article', 'saveCrawlerLinks');
     Route::put('/article', 'saveArticleKeywords');
 });
