@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\Keyword;
 use App\Models\Source;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class GetCrawlerTest extends TestCase
@@ -34,28 +34,29 @@ class GetCrawlerTest extends TestCase
 
     public function testStatusShouldBe200(): void
     {
-        $response = $this->get('/api/v1/crawler');
+        $this->getResponse()->assertStatus(200);
+    }
 
-        $response->assertStatus(200);
+    private function getResponse(): TestResponse
+    {
+        return $this->get('/api/v1/crawler');
     }
 
     public function testSources(): void
     {
-        $response = $this->get('/api/v1/crawler');
-
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('sources', $this->sources->count())
-                ->etc()
-        );
+        $this->getResponse()
+            ->assertJson(fn (AssertableJson $json) =>
+                $json->has('sources', $this->sources->count())
+                    ->etc()
+            );
     }
 
     public function testKeywords(): void
     {
-        $response = $this->get('/api/v1/crawler');
-
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('keywords', $this->keywords->pluck('name'))
-                ->etc()
-        );
+        $this->getResponse()
+            ->assertJson(fn (AssertableJson $json) =>
+                $json->where('keywords', $this->keywords->pluck('name'))
+                    ->etc()
+            );
     }
 }
