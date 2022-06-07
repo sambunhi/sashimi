@@ -42,6 +42,14 @@ jobs:
     needs: php-install
     runs-on: ubuntu-latest
     container: alpine:3.16
+    services:
+      mariadb:
+        image: mariadb
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_ROOT_PASSWORD: password
+          MARIADB_DATABASE: sashimi
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -55,6 +63,10 @@ jobs:
           printf 'zend_extension=xdebug.so\nxdebug.mode=coverage\n' > /etc/$PHP/conf.d/50_xdebug.ini
       - name: env
         run: cp .env.example .env && $PHP artisan key:generate
+      - name: wait
+        run: until nc -vzw 1 mariadb 3306; do echo "Wait for database online..."; sleep 1; done
+      - name: database
+        run: $PHP artisan migrate && $PHP artisan db:seed
       - name: phpunit
         run: $PHP ./vendor/bin/phpunit --coverage-text --colors=never
   php-trim:
