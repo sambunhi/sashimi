@@ -212,4 +212,14 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Crawler Shared Secret
+    |--------------------------------------------------------------------------
+    |
+    | Bearer token used for crawler.
+    |
+    */
+
+    'crawler_secret' => env('CRAWLER_SECRET'),
 ];
