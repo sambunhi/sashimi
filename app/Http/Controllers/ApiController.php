@@ -118,6 +118,10 @@ class ApiController extends Controller
 
     public function getArticles(Request $request)
     {
+        $request->validate([
+            'date'=>'required|date_format:Y-m-d'
+        ]);
+
         $date = $request->get('date');
 
         $articles = Article::with('source')->with('trend')->select('id', 'source_id', 'title', 'url', 'published_at')
