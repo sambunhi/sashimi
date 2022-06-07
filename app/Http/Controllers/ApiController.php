@@ -45,29 +45,30 @@ class ApiController extends Controller
 
     public function saveArticleKeywords(Request $request)
     {
+        $request->validate([
+            'url'=>'required|exists:articles,url|url'
+        ]);
+
         $article = Article::where('url', $request->get('url'))->first();
 
-        if ($article != null) {
-            DB::transaction(function () use ($request, $article) {
-                foreach ($request->get('keywords') as $keyword => $cnt) {
-                    Trend::updateOrCreate([
-                        'article_id' => $article->id,
-                        'keyword' => $keyword
-                    ], [
-                        'article_id' => $article->id,
-                        'keyword' => $keyword,
-                        'cnt' => $cnt
-                    ]);
-                }
+        DB::transaction(function () use ($request, $article) {
+            foreach ($request->get('keywords') as $keyword => $cnt) {
+                Trend::updateOrCreate([
+                    'article_id' => $article->id,
+                    'keyword' => $keyword
+                ], [
+                    'article_id' => $article->id,
+                    'keyword' => $keyword,
+                    'cnt' => $cnt
+                ]);
+            }
 
-                $article->nltk_at = Carbon::now();
-                $article->save();
-            });
+            $article->nltk_at = Carbon::now();
+            $article->save();
+        });
 
-            return "success";
-        } else {
-            return "url not found";
-        }
+        return "success";
+
     }
 
     public function getSystemInfo(Request $request)
